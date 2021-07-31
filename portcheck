@@ -1,0 +1,64 @@
+#!/bin/sh
+
+while getopts "v?" flag; do
+  case "${flag}" in
+    v) verbose=true ;;
+    *) exit 1 ;;
+  esac
+done
+shift $((OPTIND-1))
+
+if [ -z "${1}" ]; then
+  echo "usage: $0 [-v] source-ref [target-ref]"
+  exit 1
+fi
+
+source_ref="${1}"
+target_ref="${2:-$(git rev-parse HEAD)}"
+merge_base=$(git merge-base "${source_ref}" "${target_ref}")
+
+_log_debug() {
+  [ "${verbose}" = true ] && echo "${1}"
+}
+
+_log_error() {
+  echo "${1}"
+}
+
+_red() {
+  tput setaf 1; printf "%s" "${1}"
+  tput sgr0
+}
+
+_green() {
+  tput setaf 2; printf "%s" "${1}"
+  tput sgr0
+}
+
+_original_commits() {
+  git log  --no-merges --pretty=format:%H "${merge_base}..${source_ref}"
+}
+
+_ports_of() {
+  git log \
+    --regexp-ignore-case \
+    --grep="^Port-Of: ${1}$" \
+    --pretty=format:%h \
+    "${merge_base}..${target_ref}"
+}
+
+for commit in $(_original_commits); do
+  ports=$(_ports_of "${commit}")
+  short_commit="$(git rev-parse --short "${commit}")"
+
+  if [ -n "${ports}" ]; then
+    for port in ${ports}; do
+      _log_debug "[${short_commit}] ported as $(_green "${port}")"
+    done
+  else
+    _log_error "[${short_commit}] $(_red "not ported")"
+    exit_code=1
+  fi
+done
+
+exit "${exit_code:-1}"
