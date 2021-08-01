@@ -51,11 +51,11 @@ for commit in $(_original_commits); do
   ports=$(_ports_of "${commit}")
   short_commit="$(git rev-parse --short "${commit}")"
 
-  if [ -n "${ports}" ]; then
-    for port in ${ports}; do
-      _log_debug "[${short_commit}] ported as $(_green "${port}")"
-    done
-  else
+  for port in ${ports}; do
+    _log_debug "[${short_commit}] ported as $(_green "${port}")"
+  done
+
+  if [ -z "${ports}" ]; then
     _log_error "[${short_commit}] $(_red "not ported")"
     exit_code=1
   fi
