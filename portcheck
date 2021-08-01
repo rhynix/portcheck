@@ -55,6 +55,7 @@ for ref in ${commits}; do
     git log \
       --regexp-ignore-case \
       --grep="^Port-Of: ${ref}$" \
+      --grep="^(cherry picked from commit ${ref})$" \
       --pretty=format:%h \
       "${base}..${target_ref}"
   )
