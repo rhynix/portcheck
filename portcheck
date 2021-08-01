@@ -1,24 +1,12 @@
 #!/bin/sh
 
-while getopts "v?" flag; do
-  case "${flag}" in
-    v) verbose=true ;;
-    *) exit 1 ;;
-  esac
-done
-shift $((OPTIND-1))
-
-if [ -z "${1}" ]; then
-  echo "usage: $0 [-v] <source-ref> [<target-ref>]"
-  exit 1
-fi
-
-source_ref="${1}"
-target_ref="${2:-"HEAD"}"
-merge_base=$(git merge-base "${source_ref}" "${target_ref}")
-
 _echo_verbose() {
   [ "${verbose}" = true ] && echo "${1}"
+}
+
+_fail() {
+  echo "${1}"
+  exit 1
 }
 
 _red() {
@@ -31,31 +19,52 @@ _green() {
   tput sgr0
 }
 
-_original_commits() {
-  git log \
-    --no-merges \
-    --pretty=format:%H \
-    "${merge_base}..${source_ref}"
+_valid_commit_ref() {
+  git rev-parse --verify --quiet "${1}^{commit}" > /dev/null
 }
 
-_ports_of() {
-  git log \
-    --regexp-ignore-case \
-    --grep="^Port-Of: ${1}$" \
-    --pretty=format:%h \
-    "${merge_base}..${target_ref}"
-}
+while getopts "v?" flag; do
+  case "${flag}" in
+    v) verbose=true ;;
+    *) exit 1 ;;
+  esac
+done
+shift $((OPTIND-1))
 
-for commit in $(_original_commits); do
-  ports=$(_ports_of "${commit}")
-  short_commit="$(git rev-parse --short "${commit}")"
+if [ -z "${1}" ]; then
+  _fail "usage: $0 [-v] <source-ref> [<target-ref>]"
+fi
+
+source_ref="${1}"
+target_ref="${2:-"HEAD"}"
+
+if ! _valid_commit_ref "${source_ref}"; then
+  _fail "not a valid commit ref: ${source_ref}"
+fi
+
+if ! _valid_commit_ref "${target_ref}"; then
+  _fail "not a valid commit ref: ${target_ref}"
+fi
+
+base=$(git merge-base "${source_ref}" "${target_ref}")
+commits=$(git log --no-merges --pretty=format:%H "${base}..${source_ref}")
+
+for ref in ${commits}; do
+  short_ref=$(git rev-parse --short "${ref}")
+  ports=$(
+    git log \
+      --regexp-ignore-case \
+      --grep="^Port-Of: ${ref}$" \
+      --pretty=format:%h \
+      "${base}..${target_ref}"
+  )
 
   for port in ${ports}; do
-    _echo_verbose "$(_green "+") ${short_commit} (port: ${port})"
+    _echo_verbose "$(_green "+") ${short_ref} (port: ${port})"
   done
 
   if [ -z "${ports}" ]; then
-    echo "$(_red "-") ${short_commit} (no port)"
+    echo "$(_red "-") ${short_ref} (no port)"
     exit_code=1
   fi
 done
