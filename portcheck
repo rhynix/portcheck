@@ -61,4 +61,4 @@ for commit in $(_original_commits); do
   fi
 done
 
-exit "${exit_code:-1}"
+exit "${exit_code:-0}"
