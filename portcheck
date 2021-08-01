@@ -36,7 +36,10 @@ _green() {
 }
 
 _original_commits() {
-  git log  --no-merges --pretty=format:%H "${merge_base}..${source_ref}"
+  git log \
+    --no-merges \
+    --pretty=format:%H \
+    "${merge_base}..${source_ref}"
 }
 
 _ports_of() {
