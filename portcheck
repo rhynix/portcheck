@@ -14,7 +14,7 @@ if [ -z "${1}" ]; then
 fi
 
 source_ref="${1}"
-target_ref="${2:-$(git rev-parse HEAD)}"
+target_ref="${2:-"HEAD"}"
 merge_base=$(git merge-base "${source_ref}" "${target_ref}")
 
 _log_debug() {
