@@ -9,7 +9,7 @@ done
 shift $((OPTIND-1))
 
 if [ -z "${1}" ]; then
-  echo "usage: $0 [-v] source-ref [target-ref]"
+  echo "usage: $0 [-v] <source-ref> [<target-ref>]"
   exit 1
 fi
 

@@ -9,14 +9,15 @@ Usage
 
 ::
 
-  portcheck [-v] source-branch [target-branch]
+  portcheck [-v] <source-ref> [<target-ref>]
 
 Options
 -------
 
 - :code:`-v`: enables verbose mode
-- :code:`source-branch`: branch containing commits that require port
-- :code:`target-branch`: branch containing port commits
+- :code:`source-ref`: branch or other ref containing commits that require port
+- :code:`target-ref`: branch or other ref containing port commits (defaults to
+  :code:`HEAD`)
 
 Ports
 -----
