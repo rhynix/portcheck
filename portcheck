@@ -17,12 +17,8 @@ source_ref="${1}"
 target_ref="${2:-"HEAD"}"
 merge_base=$(git merge-base "${source_ref}" "${target_ref}")
 
-_log_debug() {
+_echo_verbose() {
   [ "${verbose}" = true ] && echo "${1}"
-}
-
-_log_error() {
-  echo "${1}"
 }
 
 _red() {
@@ -55,11 +51,11 @@ for commit in $(_original_commits); do
   short_commit="$(git rev-parse --short "${commit}")"
 
   for port in ${ports}; do
-    _log_debug "[${short_commit}] ported as $(_green "${port}")"
+    _echo_verbose "$(_green "+") ${short_commit} (port: ${port})"
   done
 
   if [ -z "${ports}" ]; then
-    _log_error "[${short_commit}] $(_red "not ported")"
+    echo "$(_red "-") ${short_commit} (no port)"
     exit_code=1
   fi
 done
