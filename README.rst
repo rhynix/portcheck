@@ -27,7 +27,7 @@ lines in the commit message:
 
 ::
 
-  (port of <commit-sha>)
+  (port from commit <commit-sha>)
   (cherry picked from commit <commit-sha>)
 
 The :code:`commit-sha` must be the complete SHA of the commit as returned by
