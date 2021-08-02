@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -eu
+
 echo_v() {
     if [ "${verbose}" = true ]; then
         echo "${1}"
