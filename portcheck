@@ -59,7 +59,7 @@ for ref in ${commits}; do
     short_ref=$(git rev-parse --short "${ref}")
     ports=$(git log \
         --regexp-ignore-case \
-        --grep="^(port from commit ${ref})$" \
+        --grep="^(ported from commit ${ref})$" \
         --grep="^(cherry picked from commit ${ref})$" \
         --pretty=format:%h \
         "${base}..${target_ref}")
