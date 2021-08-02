@@ -1,73 +1,75 @@
 #!/bin/sh
 
-_echo_verbose() {
-  [ "${verbose}" = true ] && echo "${1}"
+echo_v() {
+    if [ "${verbose}" = true ]; then
+        echo "${1}"
+    fi
 }
 
-_fail() {
-  echo "${1}"
-  exit 1
+fail() {
+    echo "${1}"
+    exit 1
 }
 
-_red() {
-  tput setaf 1; printf "%s" "${1}"
-  tput sgr0
+red() {
+    tput setaf 1; printf "%s" "${1}"
+    tput sgr0
 }
 
-_green() {
-  tput setaf 2; printf "%s" "${1}"
-  tput sgr0
+green() {
+    tput setaf 2; printf "%s" "${1}"
+    tput sgr0
 }
 
-_valid_commit_ref() {
-  git rev-parse --verify --quiet "${1}^{commit}" > /dev/null
+valid_commit_ref() {
+    git rev-parse --verify --quiet "${1}^{commit}" > /dev/null
 }
+
+verbose=false
 
 while getopts "v?" flag; do
-  case "${flag}" in
-    v) verbose=true ;;
-    *) exit 1 ;;
-  esac
+    case "${flag}" in
+        v) verbose=true ;;
+        *) exit 1 ;;
+    esac
 done
 shift $((OPTIND-1))
-
-if [ -z "${1}" ]; then
-  _fail "usage: $0 [-v] <source-ref> [<target-ref>]"
-fi
 
 source_ref="${1}"
 target_ref="${2:-"HEAD"}"
 
-if ! _valid_commit_ref "${source_ref}"; then
-  _fail "not a valid commit ref: ${source_ref}"
+if [ -z "${1}" ]; then
+    fail "usage: ${0} [-v] <source-ref> [<target-ref>]"
 fi
 
-if ! _valid_commit_ref "${target_ref}"; then
-  _fail "not a valid commit ref: ${target_ref}"
+if ! valid_commit_ref "${source_ref}"; then
+    fail "not a valid commit ref: ${source_ref}"
+fi
+
+if ! valid_commit_ref "${target_ref}"; then
+    fail "not a valid commit ref: ${target_ref}"
 fi
 
 base=$(git merge-base "${source_ref}" "${target_ref}")
 commits=$(git log --no-merges --pretty=format:%H "${base}..${source_ref}")
 
 for ref in ${commits}; do
-  short_ref=$(git rev-parse --short "${ref}")
-  ports=$(
-    git log \
-      --regexp-ignore-case \
-      --grep="^(port from commit ${ref})$" \
-      --grep="^(cherry picked from commit ${ref})$" \
-      --pretty=format:%h \
-      "${base}..${target_ref}"
-  )
+    short_ref=$(git rev-parse --short "${ref}")
+    ports=$(git log \
+        --regexp-ignore-case \
+        --grep="^(port from commit ${ref})$" \
+        --grep="^(cherry picked from commit ${ref})$" \
+        --pretty=format:%h \
+        "${base}..${target_ref}")
 
-  for port in ${ports}; do
-    _echo_verbose "$(_green "+") ${short_ref} (port: ${port})"
-  done
+    for port in ${ports}; do
+        echo_v "$(green "+") ${short_ref} (port: ${port})"
+    done
 
-  if [ -z "${ports}" ]; then
-    echo "$(_red "-") ${short_ref} (no port)"
-    exit_code=1
-  fi
+    if [ -z "${ports}" ]; then
+        echo "$(red "-") ${short_ref} (no port)"
+        exit_code=1
+    fi
 done
 
 exit "${exit_code:-0}"
